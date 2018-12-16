@@ -50,22 +50,67 @@ async def nominate(ctx, user: discord.User, *reason: str):
 
     await bot.say('Nominated {} for {}'.format(user, not_split_reason))
 
+@bot.command()
+@commands.has_role('Staff')
+async def remove(user: discord.User):
+    """This command removes a member from the nomination file."""
+    user_id_removal = user.id
+    people = []
+    reasons = []
+    list_for_csv = {}
+    with open('nominations.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        name_counter = 1
+        list_counter = 1
+        for row in csv_reader:
+
+            # Iterates through the CSV file to get names of the users and reasons for nominations.
+            # Also adds the Triumphant role to the user.
+
+            if name_counter == 1:
+                user_id = str(row[1])
+                name_counter += 1
+                people.append(user_id)
+            elif name_counter == 2:
+                user_reason = row[1]
+                reasons.append(user_reason)
+                name_counter = 1
+                list_counter += 1
+        i = 0
+        for name in people:
+            if name == user_id_removal:
+                people.pop(i)
+                reasons.pop(i)
+            i += 1
+        print('Final people {}'.format(people))
+        print('Final reasons {}'.format(reasons))
+
+    with open('nominations.csv', 'w') as csv_file:
+        writer = csv.writer(csv_file)
+        j = 0
+        for name in people:
+            list_for_csv = {'name': people[j], 'reason': reasons[j]}
+            for key, value in list_for_csv.items():
+                writer.writerow([key, value])
+            j += 1
+    await bot.say('You have removed all of the nominations for that Character')
+
 
 @commands.has_role('Staff')
 @bot.command(pass_context=True)
-async def post():
-
+async def post(ctx):
     # Sets up necessary variables.
     names = []
     reasons = []
-    usernames = []
     server = bot.get_server('INSERT SERVER ID')
-    triumphant_role = discord.utils.get(server.roles, name='INSERT ROLE NAME')
+    triumphant_role = discord.utils.get(server.roles, name='INSERT ROLE TITLE')
+
+    await bot.send_typing(ctx.message.channel)
 
     # Removes Triumphant Role from previous users.
     for member in server.members:
         for role in member.roles:
-            if role.name == "INSERT ROLE NAME":
+            if role.name == "INSERT ROLE TITLE":
                 await bot.remove_roles(member, triumphant_role)
 
     # Writes the CSV file.
@@ -84,8 +129,7 @@ async def post():
                 try:
                     await bot.add_roles(username, triumphant_role)
                 except HTTPException:
-                    await bot.say('Adding triumphant role failed. Perhaps you have insufficient roles.')
-                usernames.append(username)
+                    await bot.say('Adding triumphant_role failed. Perhaps you have insufficient roles.')
                 display_username = username.display_name
                 names.append(str(display_username))
                 name_counter += 1
@@ -100,8 +144,6 @@ async def post():
     embed.add_field(name="Names:", value='\n'.join(names), inline=True)
     embed.add_field(name="Reasons:", value='\n'.join(reasons), inline=True)
     await bot.say(embed=embed)
-    await bot.say('Congrats to the {}!'.format(discord.utils.get(server.roles, name='INSERT ROLE NAME').mention))
-
 
 @bot.command(pass_context=True)
 async def time():
