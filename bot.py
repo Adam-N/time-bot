@@ -128,4 +128,4 @@ async def timezones(ctx):
     file.close()
 
 
-bot.run('NDQyNDUyNTg3MjcxNDIxOTky.D3kq0A.qKW9JTzIkR4ih0UsiKhhSCXg7bc')
+bot.run('INSERT TOKEN HERE')
